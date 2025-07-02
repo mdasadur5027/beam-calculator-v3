@@ -1,0 +1,109 @@
+import React from 'react';
+
+const SupportsTab = ({ beamData, updateBeamData }) => {
+  const supportTypes = ['Fixed', 'Hinge', 'Roller'];
+
+  const addSupport = () => {
+    if (beamData.supports.length < 2) {
+      const newSupport = {
+        type: 'Hinge',
+        position: beamData.supports.length === 0 ? 0 : beamData.length
+      };
+      updateBeamData({
+        supports: [...beamData.supports, newSupport]
+      });
+    }
+  };
+
+  const removeSupport = (index) => {
+    const newSupports = beamData.supports.filter((_, i) => i !== index);
+    updateBeamData({ supports: newSupports });
+  };
+
+  const updateSupport = (index, field, value) => {
+    const newSupports = [...beamData.supports];
+    newSupports[index] = { ...newSupports[index], [field]: value };
+    updateBeamData({ supports: newSupports });
+  };
+
+  return (
+    <div className="space-y-6">
+      <div className="flex items-center justify-between">
+        <h3 className="text-sm font-medium text-gray-900">Support Configuration</h3>
+        {beamData.supports.length < 2 && (
+          <button onClick={addSupport} className="btn-primary text-sm">
+            Add Support
+          </button>
+        )}
+      </div>
+
+      <div className="space-y-4">
+        {beamData.supports.map((support, index) => (
+          <div key={index} className="card">
+            <div className="flex items-center justify-between mb-4">
+              <h4 className="font-medium text-gray-900">Support {index + 1}</h4>
+              {beamData.supports.length > 1 && (
+                <button
+                  onClick={() => removeSupport(index)}
+                  className="text-red-600 hover:text-red-800 text-sm"
+                >
+                  Remove
+                </button>
+              )}
+            </div>
+
+            <div className="grid grid-cols-2 gap-4">
+              <div>
+                <label className="block text-sm font-medium text-gray-700 mb-2">
+                  Support Type
+                </label>
+                <select
+                  value={support.type}
+                  onChange={(e) => updateSupport(index, 'type', e.target.value)}
+                  className="input-field"
+                >
+                  {supportTypes.map(type => (
+                    <option key={type} value={type}>{type}</option>
+                  ))}
+                </select>
+              </div>
+
+              <div>
+                <label className="block text-sm font-medium text-gray-700 mb-2">
+                  Position (m)
+                </label>
+                <input
+                  type="number"
+                  min="0"
+                  max={beamData.length}
+                  step="0.1"
+                  value={support.position}
+                  onChange={(e) => updateSupport(index, 'position', parseFloat(e.target.value) || 0)}
+                  className="input-field"
+                />
+              </div>
+            </div>
+
+            <div className="mt-3 text-xs text-gray-500">
+              {support.type === 'Fixed' && 'Prevents translation and rotation'}
+              {support.type === 'Hinge' && 'Prevents translation, allows rotation'}
+              {support.type === 'Roller' && 'Prevents vertical translation only'}
+            </div>
+          </div>
+        ))}
+      </div>
+
+      {beamData.supports.length === 0 && (
+        <div className="text-center py-8 text-gray-500">
+          <svg className="w-12 h-12 mx-auto mb-4 text-gray-300" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 21V5a2 2 0 00-2-2H7a2 2 0 00-2 2v16m14 0h2m-2 0h-5m-9 0H3m2 0h5M9 7h1m-1 4h1m4-4h1m-1 4h1m-5 10v-5a1 1 0 011-1h2a1 1 0 011 1v5m-4 0h4" />
+          </svg>
+          <p>No supports defined</p>
+          <p className="text-sm">Add at least one support to analyze the beam</p>
+        </div>
+      )}
+    </div>
+  );
+};
+
+export default SupportsTab;
