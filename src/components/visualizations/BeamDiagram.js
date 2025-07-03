@@ -35,7 +35,7 @@ const BeamDiagram = ({ beamData, results }) => {
     // Draw supports
     beamData.supports.forEach(support => {
       const x = margin + support.position * scale;
-      drawSupport(ctx, x, beamY + beamHeight/2, support.type);
+      drawSupport(ctx, x, beamY + beamHeight/2, support.type, support.position, beamData.length);
     });
 
     // Draw point loads
@@ -61,7 +61,7 @@ const BeamDiagram = ({ beamData, results }) => {
     drawDimensions(ctx, margin, beamY + 60, beamData.length * scale, beamData);
   };
 
-  const drawSupport = (ctx, x, y, type) => {
+  const drawSupport = (ctx, x, y, type, position, beamLength) => {
     ctx.save();
     ctx.strokeStyle = '#374151';
     ctx.fillStyle = '#374151';
@@ -69,14 +69,40 @@ const BeamDiagram = ({ beamData, results }) => {
 
     switch (type) {
       case 'Fixed':
-        // Draw fixed support
-        ctx.fillRect(x - 15, y, 30, 20);
-        // Draw hatching
-        for (let i = 0; i < 6; i++) {
-          ctx.beginPath();
-          ctx.moveTo(x - 15 + i * 5, y + 20);
-          ctx.lineTo(x - 10 + i * 5, y + 25);
-          ctx.stroke();
+        // Determine orientation based on position
+        const isAtStart = position === 0;
+        const isAtEnd = position === beamLength;
+        
+        if (isAtStart) {
+          // Fixed support at left end - hatching on the left
+          ctx.fillRect(x - 20, y - 10, 20, 30);
+          // Draw hatching on the left side
+          for (let i = 0; i < 6; i++) {
+            ctx.beginPath();
+            ctx.moveTo(x - 20, y - 10 + i * 5);
+            ctx.lineTo(x - 15, y - 5 + i * 5);
+            ctx.stroke();
+          }
+        } else if (isAtEnd) {
+          // Fixed support at right end - hatching on the right
+          ctx.fillRect(x, y - 10, 20, 30);
+          // Draw hatching on the right side
+          for (let i = 0; i < 6; i++) {
+            ctx.beginPath();
+            ctx.moveTo(x + 20, y - 10 + i * 5);
+            ctx.lineTo(x + 15, y - 5 + i * 5);
+            ctx.stroke();
+          }
+        } else {
+          // Fixed support in middle - default vertical
+          ctx.fillRect(x - 15, y, 30, 20);
+          // Draw hatching at bottom
+          for (let i = 0; i < 6; i++) {
+            ctx.beginPath();
+            ctx.moveTo(x - 15 + i * 5, y + 20);
+            ctx.lineTo(x - 10 + i * 5, y + 25);
+            ctx.stroke();
+          }
         }
         break;
       case 'Hinge':

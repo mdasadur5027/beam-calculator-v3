@@ -1,31 +1,25 @@
 import React from 'react';
 
 const ResultsTables = ({ beamData, results }) => {
-  const generateTableData = (xData, yData, interval = 2.0) => {
+  const generateCombinedTableData = (interval = 1.0) => {
+    if (results.shearForce.x.length === 0) return [];
+    
     const tableData = [];
-    for (let i = 0; i < xData.length; i++) {
-      const x = xData[i];
+    for (let i = 0; i < results.shearForce.x.length; i++) {
+      const x = results.shearForce.x[i];
       if (x % interval === 0 || Math.abs(x - beamData.length) < 0.01) {
         tableData.push({
           position: x.toFixed(2),
-          value: yData[i].toFixed(4)
+          shearForce: results.shearForce.y[i].toFixed(4),
+          bendingMoment: results.bendingMoment.y[i].toFixed(4),
+          deflection: (results.deflection.y[i] * 1000).toFixed(4) // Convert to mm
         });
       }
     }
     return tableData;
   };
 
-  const shearForceTable = results.shearForce.x.length > 0 
-    ? generateTableData(results.shearForce.x, results.shearForce.y)
-    : [];
-
-  const bendingMomentTable = results.bendingMoment.x.length > 0
-    ? generateTableData(results.bendingMoment.x, results.bendingMoment.y)
-    : [];
-
-  const deflectionTable = results.deflection.x.length > 0
-    ? generateTableData(results.deflection.x, results.deflection.y.map(d => d * 1000)) // Convert to mm
-    : [];
+  const combinedTable = generateCombinedTableData(1.0);
 
   return (
     <div className="space-y-6">
@@ -83,94 +77,22 @@ const ResultsTables = ({ beamData, results }) => {
         </div>
       )}
 
-      {/* Shear Force Table */}
+      {/* Combined Results Table */}
       <div className="card">
-        <h3 className="text-lg font-semibold text-gray-900 mb-4">Shear Force Values (every 2m)</h3>
-        {shearForceTable.length > 0 ? (
+        <h3 className="text-lg font-semibold text-gray-900 mb-4">Analysis Results (every 1m)</h3>
+        {combinedTable.length > 0 ? (
           <div className="overflow-x-auto">
             <table className="min-w-full divide-y divide-gray-200">
-              <thead className="bg-blue-50">
+              <thead className="bg-gray-50">
                 <tr>
-                  <th className="px-6 py-3 text-left text-xs font-medium text-blue-700 uppercase tracking-wider">
+                  <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
                     Position (m)
                   </th>
                   <th className="px-6 py-3 text-left text-xs font-medium text-blue-700 uppercase tracking-wider">
                     Shear Force (kN)
                   </th>
-                </tr>
-              </thead>
-              <tbody className="bg-white divide-y divide-gray-200">
-                {shearForceTable.map((row, index) => (
-                  <tr key={index} className="hover:bg-gray-50">
-                    <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-900">
-                      {row.position}
-                    </td>
-                    <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-900">
-                      <span className={parseFloat(row.value) < 0 ? 'text-red-600' : 'text-blue-600'}>
-                        {row.value}
-                      </span>
-                    </td>
-                  </tr>
-                ))}
-              </tbody>
-            </table>
-          </div>
-        ) : (
-          <div className="text-center py-8 text-gray-500">
-            <p>No shear force data available</p>
-          </div>
-        )}
-      </div>
-
-      {/* Bending Moment Table */}
-      <div className="card">
-        <h3 className="text-lg font-semibold text-gray-900 mb-4">Bending Moment Values (every 2m)</h3>
-        {bendingMomentTable.length > 0 ? (
-          <div className="overflow-x-auto">
-            <table className="min-w-full divide-y divide-gray-200">
-              <thead className="bg-green-50">
-                <tr>
-                  <th className="px-6 py-3 text-left text-xs font-medium text-green-700 uppercase tracking-wider">
-                    Position (m)
-                  </th>
                   <th className="px-6 py-3 text-left text-xs font-medium text-green-700 uppercase tracking-wider">
                     Bending Moment (kNm)
-                  </th>
-                </tr>
-              </thead>
-              <tbody className="bg-white divide-y divide-gray-200">
-                {bendingMomentTable.map((row, index) => (
-                  <tr key={index} className="hover:bg-gray-50">
-                    <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-900">
-                      {row.position}
-                    </td>
-                    <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-900">
-                      <span className={parseFloat(row.value) < 0 ? 'text-red-600' : 'text-green-600'}>
-                        {row.value}
-                      </span>
-                    </td>
-                  </tr>
-                ))}
-              </tbody>
-            </table>
-          </div>
-        ) : (
-          <div className="text-center py-8 text-gray-500">
-            <p>No bending moment data available</p>
-          </div>
-        )}
-      </div>
-
-      {/* Deflection Table */}
-      <div className="card">
-        <h3 className="text-lg font-semibold text-gray-900 mb-4">Deflection Values (every 2m)</h3>
-        {deflectionTable.length > 0 ? (
-          <div className="overflow-x-auto">
-            <table className="min-w-full divide-y divide-gray-200">
-              <thead className="bg-red-50">
-                <tr>
-                  <th className="px-6 py-3 text-left text-xs font-medium text-red-700 uppercase tracking-wider">
-                    Position (m)
                   </th>
                   <th className="px-6 py-3 text-left text-xs font-medium text-red-700 uppercase tracking-wider">
                     Deflection (mm)
@@ -178,14 +100,24 @@ const ResultsTables = ({ beamData, results }) => {
                 </tr>
               </thead>
               <tbody className="bg-white divide-y divide-gray-200">
-                {deflectionTable.map((row, index) => (
+                {combinedTable.map((row, index) => (
                   <tr key={index} className="hover:bg-gray-50">
-                    <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-900">
+                    <td className="px-6 py-4 whitespace-nowrap text-sm font-medium text-gray-900">
                       {row.position}
                     </td>
                     <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-900">
-                      <span className={parseFloat(row.value) < 0 ? 'text-red-600' : 'text-red-600'}>
-                        {row.value}
+                      <span className={parseFloat(row.shearForce) < 0 ? 'text-red-600' : 'text-blue-600'}>
+                        {row.shearForce}
+                      </span>
+                    </td>
+                    <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-900">
+                      <span className={parseFloat(row.bendingMoment) < 0 ? 'text-red-600' : 'text-green-600'}>
+                        {row.bendingMoment}
+                      </span>
+                    </td>
+                    <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-900">
+                      <span className={parseFloat(row.deflection) < 0 ? 'text-red-600' : 'text-red-600'}>
+                        {row.deflection}
                       </span>
                     </td>
                   </tr>
@@ -195,7 +127,8 @@ const ResultsTables = ({ beamData, results }) => {
           </div>
         ) : (
           <div className="text-center py-8 text-gray-500">
-            <p>No deflection data available</p>
+            <p>No analysis data available</p>
+            <p className="text-sm">Configure beam parameters to see the results</p>
           </div>
         )}
       </div>
