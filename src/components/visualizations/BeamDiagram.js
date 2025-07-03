@@ -79,8 +79,8 @@ const BeamDiagram = ({ beamData, results }) => {
           // Draw hatching on the left side
           for (let i = 0; i < 6; i++) {
             ctx.beginPath();
-            ctx.moveTo(x - 20, y - 10 + i * 5);
-            ctx.lineTo(x - 15, y - 5 + i * 5);
+            ctx.moveTo(x - 23, y - 25 + i * 5);
+            ctx.lineTo(x - 18, y - 20 + i * 5);
             ctx.stroke();
           }
         } else if (isAtEnd) {
