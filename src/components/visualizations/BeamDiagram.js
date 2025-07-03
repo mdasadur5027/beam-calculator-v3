@@ -75,7 +75,7 @@ const BeamDiagram = ({ beamData, results }) => {
         
         if (isAtStart) {
           // Fixed support at left end - hatching on the left
-          ctx.fillRect(x - 20, y - 10, 20, 30);
+          ctx.fillRect(x - 20, y - 25, 20, 30);
           // Draw hatching on the left side
           for (let i = 0; i < 6; i++) {
             ctx.beginPath();
