@@ -114,7 +114,7 @@ function App() {
 
   return (
     <div className="min-h-screen bg-gray-50">
-      <Header />
+      <Header beamData={beamData} results={results} />
       <div className="flex h-[calc(100vh-4rem)]">
         <div className="w-96 border-r border-gray-200 bg-white overflow-y-auto">
           <InputPanel 
