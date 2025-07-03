@@ -108,11 +108,11 @@ const BeamDiagram = ({ beamData, results }) => {
       case 'Hinge':
         // Draw hinge support
         ctx.beginPath();
-        ctx.arc(x, y + 10, 10, 0, Math.PI * 2);
+        ctx.arc(x, y + 5, 5, 0, Math.PI * 2);
         ctx.fill();
         ctx.beginPath();
         ctx.moveTo(x - 15, y + 20);
-        ctx.lineTo(x, y + 10);
+        ctx.lineTo(x, y );
         ctx.lineTo(x + 15, y + 20);
         ctx.lineTo(x - 15, y + 20);
         ctx.stroke();
