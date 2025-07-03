@@ -127,10 +127,10 @@ const BeamDiagram = ({ beamData, results }) => {
       case 'Roller':
         // Draw roller support
         ctx.beginPath();
-        ctx.arc(x - 8, y + 15, 5, 0, Math.PI * 2);
+        ctx.arc(x - 8, y + 20, 5, 0, Math.PI * 2);
         ctx.fill();
         ctx.beginPath();
-        ctx.arc(x + 8, y + 15, 5, 0, Math.PI * 2);
+        ctx.arc(x + 8, y + 20, 5, 0, Math.PI * 2);
         ctx.fill();
         ctx.beginPath();
         ctx.moveTo(x - 15, y + 20);
