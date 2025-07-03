@@ -116,6 +116,13 @@ const BeamDiagram = ({ beamData, results }) => {
         ctx.lineTo(x + 15, y + 20);
         ctx.lineTo(x - 15, y + 20);
         ctx.stroke();
+         // Draw hatching at bottom
+        for (let i = 0; i < 6; i++) {
+            ctx.beginPath();
+            ctx.moveTo(x - 15 + i * 5, y + 20);
+            ctx.lineTo(x - 10 + i * 5, y + 25);
+            ctx.stroke();
+          }
         break;
       case 'Roller':
         // Draw roller support
