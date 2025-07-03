@@ -179,14 +179,19 @@ const BeamDiagram = ({ beamData, results }) => {
     ctx.lineWidth = 1;
 
     const maxMag = Math.max(Math.abs(startMag), Math.abs(endMag));
+    
+    // Determine directions for start and end
+    const startDirection = startMag >= 0 ? -1 : 1; // Negative magnitude = downward
+    const endDirection = endMag >= 0 ? -1 : 1;     // Negative magnitude = downward
+    
     const startHeight = (Math.abs(startMag) / maxMag) * 40;
     const endHeight = (Math.abs(endMag) / maxMag) * 40;
 
     // Draw distributed load shape
     ctx.beginPath();
     ctx.moveTo(startX, y);
-    ctx.lineTo(startX, y - startHeight);
-    ctx.lineTo(endX, y - endHeight);
+    ctx.lineTo(startX, y + startDirection * startHeight);
+    ctx.lineTo(endX, y + endDirection * endHeight);
     ctx.lineTo(endX, y);
     ctx.closePath();
     ctx.globalAlpha = 0.3;
@@ -199,16 +204,35 @@ const BeamDiagram = ({ beamData, results }) => {
     for (let i = 0; i <= numArrows; i++) {
       const x = startX + (i / numArrows) * (endX - startX);
       const mag = startMag + (i / numArrows) * (endMag - startMag);
+      const direction = mag >= 0 ? -1 : 1; // Negative magnitude = downward
       const height = (Math.abs(mag) / maxMag) * 40;
       
       if (height > 5) {
+        // Draw arrow pointing in correct direction
         ctx.beginPath();
-        ctx.moveTo(x, y - height);
-        ctx.lineTo(x - 3, y - height + 6);
-        ctx.lineTo(x + 3, y - height + 6);
+        ctx.moveTo(x, y + direction * height);
+        ctx.lineTo(x - 3, y + direction * (height - 6));
+        ctx.lineTo(x + 3, y + direction * (height - 6));
         ctx.closePath();
         ctx.fill();
       }
+    }
+
+    // Draw magnitude labels
+    if (startMag !== 0) {
+      ctx.fillStyle = '#374151';
+      ctx.font = '12px Inter';
+      ctx.textAlign = 'center';
+      const labelY = y + startDirection * (startHeight + 15);
+      ctx.fillText(`${Math.abs(startMag)} kN/m`, startX, labelY);
+    }
+    
+    if (endMag !== 0 && endMag !== startMag) {
+      ctx.fillStyle = '#374151';
+      ctx.font = '12px Inter';
+      ctx.textAlign = 'center';
+      const labelY = y + endDirection * (endHeight + 15);
+      ctx.fillText(`${Math.abs(endMag)} kN/m`, endX, labelY);
     }
 
     ctx.restore();
