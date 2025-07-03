@@ -8,7 +8,7 @@ const VisualizationPanel = ({ beamData, results }) => {
 
   const views = [
     { id: 'diagram', label: 'Beam Diagram', icon: '🏗️' },
-    { id: 'charts', label: 'SFD & BMD', icon: '📊' },
+    { id: 'charts', label: 'SFD, BMD & Deflection', icon: '📊' },
     { id: 'tables', label: 'Results Tables', icon: '📋' }
   ];
 

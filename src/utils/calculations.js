@@ -250,3 +250,57 @@ export const calculateBendingMoment = (supports, supportReactions, supportMoment
 
   return { x: xCoords, moment };
 };
+
+// Calculate unit load moment matrix for deflection calculations
+export const calculateUnitLoadMoment = (supports, beamLength, resolution) => {
+  const numPoints = Math.floor(beamLength * resolution) + 1;
+  const xCoords = Array.from({ length: numPoints }, (_, i) => (i * beamLength) / (numPoints - 1));
+  const unitWeightMoments = Array(numPoints).fill(null).map(() => Array(numPoints).fill(0));
+
+  for (let i = 0; i < numPoints; i++) {
+    // Apply a unit load at x_coords[i]
+    const unitLoad = [{ position: xCoords[i], magnitude: -1.0 }];
+    const reactions = calculateReactions(supports, unitLoad, [], [], beamLength);
+    
+    if (reactions && !reactions.error) {
+      // Separate reactions and moments
+      let supportReactions = [];
+      let supportMoments = [];
+      
+      if (supports.length === 1 && supports[0].type === "Fixed") {
+        supportReactions = [{ position: reactions.supportReactions[0].position, magnitude: reactions.supportReactions[0].magnitude }];
+        supportMoments = reactions.supportMoments || [];
+      } else {
+        supportReactions = reactions.supportReactions || [];
+      }
+
+      // Calculate bending moment due to this unit load
+      const { moment: unitMoment } = calculateBendingMoment(
+        supports, supportReactions, supportMoments, unitLoad, [], [], beamLength, resolution
+      );
+      
+      for (let j = 0; j < numPoints; j++) {
+        unitWeightMoments[i][j] = unitMoment[j];
+      }
+    }
+  }
+
+  return { x: xCoords, unitWeightMoments };
+};
+
+// Calculate deflection using virtual work method
+export const calculateDeflection = (xCoords, bendingMoment, unitWeightMoments, beamLength, EI) => {
+  const numPoints = xCoords.length;
+  const deflections = new Array(numPoints).fill(0);
+  const dx = beamLength / (numPoints - 1);
+
+  for (let i = 0; i < numPoints; i++) {
+    let sumDeflection = 0.0;
+    for (let j = 0; j < numPoints; j++) {
+      sumDeflection += bendingMoment[j] * (-unitWeightMoments[i][j]) * dx;
+    }
+    deflections[i] = sumDeflection / EI; // Deflection in meters
+  }
+
+  return { x: xCoords, deflections };
+};

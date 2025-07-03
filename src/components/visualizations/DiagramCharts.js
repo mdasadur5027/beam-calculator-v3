@@ -103,11 +103,30 @@ const DiagramCharts = ({ beamData, results }) => {
     ]
   };
 
+  const deflectionData = {
+    labels: results.deflection.x.map(x => x.toFixed(2)),
+    datasets: [
+      {
+        label: 'Deflection (mm)',
+        data: results.deflection.y.map(d => d * 1000), // Convert to mm
+        borderColor: '#ef4444',
+        backgroundColor: 'rgba(239, 68, 68, 0.2)',
+        fill: true,
+        tension: 0.1,
+        pointRadius: 0,
+        pointHoverRadius: 4,
+      }
+    ]
+  };
+
   const findMaxValues = () => {
     const maxShear = Math.max(...results.shearForce.y.map(Math.abs));
     const maxMoment = Math.max(...results.bendingMoment.y.map(Math.abs));
+    const maxDeflection = Math.max(...results.deflection.y.map(Math.abs));
+    
     const maxShearIndex = results.shearForce.y.findIndex(v => Math.abs(v) === maxShear);
     const maxMomentIndex = results.bendingMoment.y.findIndex(v => Math.abs(v) === maxMoment);
+    const maxDeflectionIndex = results.deflection.y.findIndex(v => Math.abs(v) === maxDeflection);
 
     return {
       maxShear: {
@@ -117,6 +136,10 @@ const DiagramCharts = ({ beamData, results }) => {
       maxMoment: {
         value: results.bendingMoment.y[maxMomentIndex],
         position: results.bendingMoment.x[maxMomentIndex]
+      },
+      maxDeflection: {
+        value: results.deflection.y[maxDeflectionIndex],
+        position: results.deflection.x[maxDeflectionIndex]
       }
     };
   };
@@ -127,7 +150,7 @@ const DiagramCharts = ({ beamData, results }) => {
     <div className="space-y-6">
       {/* Summary Cards */}
       {maxValues && (
-        <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+        <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
           <div className="card bg-blue-50 border-blue-200">
             <h4 className="font-semibold text-blue-900 mb-2">Maximum Shear Force</h4>
             <div className="text-2xl font-bold text-blue-700">
@@ -144,6 +167,15 @@ const DiagramCharts = ({ beamData, results }) => {
             </div>
             <div className="text-sm text-green-600">
               at position {maxValues.maxMoment.position.toFixed(2)}m
+            </div>
+          </div>
+          <div className="card bg-red-50 border-red-200">
+            <h4 className="font-semibold text-red-900 mb-2">Maximum Deflection</h4>
+            <div className="text-2xl font-bold text-red-700">
+              {(Math.abs(maxValues.maxDeflection.value) * 1000).toFixed(2)} mm
+            </div>
+            <div className="text-sm text-red-600">
+              at position {maxValues.maxDeflection.position.toFixed(2)}m
             </div>
           </div>
         </div>
@@ -207,6 +239,38 @@ const DiagramCharts = ({ beamData, results }) => {
                 </svg>
                 <p>No data to display</p>
                 <p className="text-sm">Configure beam parameters to see the bending moment diagram</p>
+              </div>
+            </div>
+          )}
+        </div>
+      </div>
+
+      {/* Deflection Diagram */}
+      <div className="card">
+        <h3 className="text-lg font-semibold text-gray-900 mb-4">Deflection Diagram</h3>
+        <div className="h-64">
+          {results.deflection.x.length > 0 ? (
+            <Line data={deflectionData} options={{
+              ...chartOptions,
+              scales: {
+                ...chartOptions.scales,
+                y: {
+                  ...chartOptions.scales.y,
+                  title: {
+                    display: true,
+                    text: 'Deflection (mm)'
+                  }
+                }
+              }
+            }} />
+          ) : (
+            <div className="flex items-center justify-center h-full text-gray-500">
+              <div className="text-center">
+                <svg className="w-12 h-12 mx-auto mb-4 text-gray-300" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M13 7h8m0 0v8m0-8l-8 8-4-4-6 6" />
+                </svg>
+                <p>No data to display</p>
+                <p className="text-sm">Configure beam parameters to see the deflection diagram</p>
               </div>
             </div>
           )}

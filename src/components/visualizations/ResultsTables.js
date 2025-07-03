@@ -23,6 +23,10 @@ const ResultsTables = ({ beamData, results }) => {
     ? generateTableData(results.bendingMoment.x, results.bendingMoment.y)
     : [];
 
+  const deflectionTable = results.deflection.x.length > 0
+    ? generateTableData(results.deflection.x, results.deflection.y.map(d => d * 1000)) // Convert to mm
+    : [];
+
   return (
     <div className="space-y-6">
       {/* Reactions Summary */}
@@ -153,6 +157,45 @@ const ResultsTables = ({ beamData, results }) => {
         ) : (
           <div className="text-center py-8 text-gray-500">
             <p>No bending moment data available</p>
+          </div>
+        )}
+      </div>
+
+      {/* Deflection Table */}
+      <div className="card">
+        <h3 className="text-lg font-semibold text-gray-900 mb-4">Deflection Values (every 2m)</h3>
+        {deflectionTable.length > 0 ? (
+          <div className="overflow-x-auto">
+            <table className="min-w-full divide-y divide-gray-200">
+              <thead className="bg-red-50">
+                <tr>
+                  <th className="px-6 py-3 text-left text-xs font-medium text-red-700 uppercase tracking-wider">
+                    Position (m)
+                  </th>
+                  <th className="px-6 py-3 text-left text-xs font-medium text-red-700 uppercase tracking-wider">
+                    Deflection (mm)
+                  </th>
+                </tr>
+              </thead>
+              <tbody className="bg-white divide-y divide-gray-200">
+                {deflectionTable.map((row, index) => (
+                  <tr key={index} className="hover:bg-gray-50">
+                    <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-900">
+                      {row.position}
+                    </td>
+                    <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-900">
+                      <span className={parseFloat(row.value) < 0 ? 'text-red-600' : 'text-red-600'}>
+                        {row.value}
+                      </span>
+                    </td>
+                  </tr>
+                ))}
+              </tbody>
+            </table>
+          </div>
+        ) : (
+          <div className="text-center py-8 text-gray-500">
+            <p>No deflection data available</p>
           </div>
         )}
       </div>
