@@ -139,6 +139,37 @@ const BeamDiagram = ({ beamData, results }) => {
         ctx.lineTo(x - 15, y + 20);
         ctx.stroke();
         break;
+      case 'Internal Hinge':
+        // Draw internal hinge - small circle on the beam
+        ctx.save();
+        ctx.strokeStyle = '#dc2626'; // Red color for internal hinge
+        ctx.fillStyle = '#ffffff';   // White fill
+        ctx.lineWidth = 3;
+        
+        // Draw circle on the beam
+        ctx.beginPath();
+        ctx.arc(x, y - 10, 8, 0, Math.PI * 2);
+        ctx.fill();
+        ctx.stroke();
+        
+        // Draw small cross inside to indicate hinge
+        ctx.strokeStyle = '#dc2626';
+        ctx.lineWidth = 2;
+        ctx.beginPath();
+        ctx.moveTo(x - 4, y - 10);
+        ctx.lineTo(x + 4, y - 10);
+        ctx.moveTo(x, y - 14);
+        ctx.lineTo(x, y - 6);
+        ctx.stroke();
+        
+        // Add label
+        ctx.fillStyle = '#dc2626';
+        ctx.font = '10px Inter';
+        ctx.textAlign = 'center';
+        ctx.fillText('IH', x, y - 25);
+        
+        ctx.restore();
+        break;
     }
     ctx.restore();
   };
@@ -368,23 +399,31 @@ const BeamDiagram = ({ beamData, results }) => {
         <div className="card">
           <h3 className="text-lg font-semibold text-gray-900 mb-4">Reaction Forces</h3>
           <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-            {results.reactions.map((reaction, index) => (
-              <div key={index} className="bg-blue-50 border border-blue-200 rounded-lg p-4">
-                <div className="flex items-center justify-between">
-                  <span className="font-medium text-blue-900">
-                    Support at {reaction.position}m
-                  </span>
-                  <span className="text-blue-700">
-                    {Math.abs(reaction.force).toFixed(2)} kN {reaction.force < 0 ? '↓' : '↑'}
-                  </span>
-                </div>
-                {reaction.moment !== undefined && (
-                  <div className="mt-2 text-sm text-blue-700">
-                    Moment: {Math.abs(reaction.moment).toFixed(2)} kNm {reaction.moment > 0 ? '↻' : '↺'}
+            {results.reactions.map((reaction, index) => {
+              const support = beamData.supports.find(s => s.position === reaction.position);
+              return (
+                <div key={index} className="bg-blue-50 border border-blue-200 rounded-lg p-4">
+                  <div className="flex items-center justify-between">
+                    <span className="font-medium text-blue-900">
+                      {support?.type === 'Internal Hinge' ? 'Internal Hinge' : 'Support'} at {reaction.position}m
+                    </span>
+                    <span className="text-blue-700">
+                      {Math.abs(reaction.force).toFixed(2)} kN {reaction.force < 0 ? '↓' : '↑'}
+                    </span>
                   </div>
-                )}
-              </div>
-            ))}
+                  {reaction.moment !== undefined && (
+                    <div className="mt-2 text-sm text-blue-700">
+                      Moment: {Math.abs(reaction.moment).toFixed(2)} kNm {reaction.moment > 0 ? '↻' : '↺'}
+                    </div>
+                  )}
+                  {support?.type === 'Internal Hinge' && (
+                    <div className="mt-2 text-xs text-yellow-700 bg-yellow-100 px-2 py-1 rounded">
+                      Internal hinge: Moment = 0 (releases moment)
+                    </div>
+                  )}
+                </div>
+              );
+            })}
           </div>
         </div>
       )}
