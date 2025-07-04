@@ -264,11 +264,12 @@ const BeamDiagram = ({ beamData, results }) => {
 
     const radius = 20;
     const startAngle = magnitude > 0 ? 0 : Math.PI;
-    const endAngle = magnitude > 0 ? Math.PI * 1.5 : Math.PI * 2.5;
+    const endAngle = magnitude > 0 ? Math.PI * 1.5 : Math.PI * 1.5;
+    const anticlockwise = magnitude > 0 ? false : true;
 
     // Draw moment arc
     ctx.beginPath();
-    ctx.arc(x, y, radius, startAngle, endAngle);
+    ctx.arc(x, y, radius, startAngle, endAngle, anticlockwise);
     ctx.stroke();
 
     // Draw arrow head
@@ -276,8 +277,15 @@ const BeamDiagram = ({ beamData, results }) => {
     const arrowY = y + radius * Math.sin(endAngle);
     ctx.beginPath();
     ctx.moveTo(arrowX, arrowY);
-    ctx.lineTo(arrowX - 5, arrowY - 5);
-    ctx.lineTo(arrowX - 5, arrowY + 5);
+    if (!anticlockwise) {
+      // Clockwise: arrow pointing left/up
+      ctx.lineTo(arrowX - 5, arrowY - 5);
+      ctx.lineTo(arrowX - 5, arrowY + 5);
+    } else {
+      // Counterclockwise: flip horizontally, arrow pointing right/up
+      ctx.lineTo(arrowX + 5, arrowY - 5);
+      ctx.lineTo(arrowX + 5, arrowY + 5);
+    }
     ctx.closePath();
     ctx.fill();
 
