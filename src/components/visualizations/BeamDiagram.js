@@ -263,18 +263,8 @@ const BeamDiagram = ({ beamData, results }) => {
     ctx.lineWidth = 2;
 
     const radius = 20;
-    
-    // Fixed the counter-clockwise moment arc
-    let startAngle, endAngle;
-    if (magnitude > 0) {
-      // Clockwise moment
-      startAngle = 0;
-      endAngle = Math.PI * 1.5;
-    } else {
-      // Counter-clockwise moment: start from 0 and go to 0.5*PI
-      startAngle = 0;
-      endAngle = -Math.PI * 0.5;
-    }
+    const startAngle = magnitude > 0 ? 0 : Math.PI;
+    const endAngle = magnitude > 0 ? Math.PI * 1.5 : Math.PI * 2.5;
 
     // Draw moment arc
     ctx.beginPath();
@@ -284,20 +274,10 @@ const BeamDiagram = ({ beamData, results }) => {
     // Draw arrow head
     const arrowX = x + radius * Math.cos(endAngle);
     const arrowY = y + radius * Math.sin(endAngle);
-    
     ctx.beginPath();
     ctx.moveTo(arrowX, arrowY);
-    
-    if (magnitude > 0) {
-      // Clockwise arrow
-      ctx.lineTo(arrowX - 5, arrowY - 5);
-      ctx.lineTo(arrowX - 5, arrowY + 5);
-    } else {
-      // Counter-clockwise arrow
-      ctx.lineTo(arrowX + 5, arrowY - 5);
-      ctx.lineTo(arrowX - 5, arrowY - 5);
-    }
-    
+    ctx.lineTo(arrowX - 5, arrowY - 5);
+    ctx.lineTo(arrowX - 5, arrowY + 5);
     ctx.closePath();
     ctx.fill();
 
