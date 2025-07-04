@@ -168,11 +168,12 @@ const BeamDiagram = ({ beamData, results }) => {
     ctx.closePath();
     ctx.fill();
 
-    // Draw magnitude label
+    // Draw magnitude label with direction arrow
     ctx.fillStyle = '#374151';
     ctx.font = '12px Inter';
     ctx.textAlign = 'center';
-    ctx.fillText(`${Math.abs(magnitude)} kN`, x, y + direction * (arrowLength + 15));
+    const directionSymbol = magnitude > 0 ? ' ↑' : ' ↓';
+    ctx.fillText(`${Math.abs(magnitude)} kN${directionSymbol}`, x, y + direction * (arrowLength + 15));
 
     ctx.restore();
   };
@@ -235,13 +236,14 @@ const BeamDiagram = ({ beamData, results }) => {
       }
     }
 
-    // Draw magnitude labels
+    // Draw magnitude labels with direction arrows
     if (startMag !== 0) {
       ctx.fillStyle = '#374151';
       ctx.font = '12px Inter';
       ctx.textAlign = 'center';
       const labelY = y - startHeight - 15;
-      ctx.fillText(`${Math.abs(startMag)} kN/m`, startX, labelY);
+      const directionSymbol = startMag > 0 ? ' ↑' : ' ↓';
+      ctx.fillText(`${Math.abs(startMag)} kN/m${directionSymbol}`, startX, labelY);
     }
     
     if (endMag !== 0 && endMag !== startMag) {
@@ -249,7 +251,8 @@ const BeamDiagram = ({ beamData, results }) => {
       ctx.font = '12px Inter';
       ctx.textAlign = 'center';
       const labelY = y - endHeight - 15;
-      ctx.fillText(`${Math.abs(endMag)} kN/m`, endX, labelY);
+      const directionSymbol = endMag > 0 ? ' ↑' : ' ↓';
+      ctx.fillText(`${Math.abs(endMag)} kN/m${directionSymbol}`, endX, labelY);
     }
 
     ctx.restore();
