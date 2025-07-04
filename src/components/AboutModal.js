@@ -36,6 +36,7 @@ const AboutModal = ({ onClose }) => {
             <div className="space-y-1 text-gray-700">
               <p className="font-medium">Md. Asadur Rahman</p>
               <p className="text-sm">Roll: 2100160</p>
+              <p className="text-sm">Rajshahi University of Engineering & Technology</p>
               <p className="text-sm text-gray-500 mt-3">
                 Developed as part of structural engineering coursework
               </p>
