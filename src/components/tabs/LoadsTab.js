@@ -202,6 +202,20 @@ const LoadsTab = ({ beamData, updateBeamData }) => {
                     onChange={(e) => updateDistributedLoad(index, 'startMag', parseFloat(e.target.value) || 0)}
                     className="input-field"
                   />
+                  <div className="mt-2 flex space-x-1">
+                    <button
+                      onClick={() => updateDistributedLoad(index, 'startMag', Math.abs(load.startMag))}
+                      className="btn-secondary text-xs flex items-center px-2 py-1"
+                    >
+                      ⬆️ Up
+                    </button>
+                    <button
+                      onClick={() => updateDistributedLoad(index, 'startMag', -Math.abs(load.startMag))}
+                      className="btn-secondary text-xs flex items-center px-2 py-1"
+                    >
+                      ⬇️ Down
+                    </button>
+                  </div>
                 </div>
 
                 <div>
@@ -215,7 +229,26 @@ const LoadsTab = ({ beamData, updateBeamData }) => {
                     onChange={(e) => updateDistributedLoad(index, 'endMag', parseFloat(e.target.value) || 0)}
                     className="input-field"
                   />
+                  <div className="mt-2 flex space-x-1">
+                    <button
+                      onClick={() => updateDistributedLoad(index, 'endMag', Math.abs(load.endMag))}
+                      className="btn-secondary text-xs flex items-center px-2 py-1"
+                    >
+                      ⬆️ Up
+                    </button>
+                    <button
+                      onClick={() => updateDistributedLoad(index, 'endMag', -Math.abs(load.endMag))}
+                      className="btn-secondary text-xs flex items-center px-2 py-1"
+                    >
+                      ⬇️ Down
+                    </button>
+                  </div>
                 </div>
+              </div>
+
+              <div className="mt-3 text-xs text-gray-500">
+                Start: {load.startMag > 0 ? 'Upward' : load.startMag < 0 ? 'Downward' : 'No load'} • 
+                End: {load.endMag > 0 ? 'Upward' : load.endMag < 0 ? 'Downward' : 'No load'}
               </div>
             </div>
           ))}
