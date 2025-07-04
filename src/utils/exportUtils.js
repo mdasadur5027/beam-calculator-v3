@@ -18,12 +18,70 @@ export const exportResultsToPDF = async (beamData, results) => {
     return false;
   };
 
-  // Helper function to add text with automatic line wrapping
-  const addWrappedText = (text, x, y, maxWidth, fontSize = 10) => {
-    pdf.setFontSize(fontSize);
-    const lines = pdf.splitTextToSize(text, maxWidth);
-    pdf.text(lines, x, y);
-    return lines.length * (fontSize * 0.35); // Return height used
+  // Helper function to capture canvas and add to PDF
+  const addCanvasToPDF = async (canvasId, title, maxWidth = pageWidth - 2 * margin) => {
+    const canvas = document.getElementById(canvasId) || document.querySelector(`canvas[id="${canvasId}"]`) || document.querySelector('canvas');
+    if (canvas) {
+      try {
+        const imgData = canvas.toDataURL('image/png', 1.0);
+        const imgWidth = maxWidth;
+        const imgHeight = (canvas.height * imgWidth) / canvas.width;
+        
+        checkPageBreak(imgHeight + 30);
+        
+        // Add title
+        pdf.setFontSize(14);
+        pdf.setFont('helvetica', 'bold');
+        pdf.text(title, margin, yPosition);
+        yPosition += 15;
+        
+        // Add image
+        pdf.addImage(imgData, 'PNG', margin, yPosition, imgWidth, imgHeight);
+        yPosition += imgHeight + 20;
+        
+        return true;
+      } catch (error) {
+        console.error(`Error capturing ${canvasId}:`, error);
+        return false;
+      }
+    }
+    return false;
+  };
+
+  // Helper function to capture Chart.js charts
+  const addChartToPDF = async (chartTitle, chartSelector) => {
+    try {
+      const chartContainer = document.querySelector(chartSelector);
+      if (chartContainer) {
+        const canvas = await html2canvas(chartContainer, {
+          backgroundColor: '#ffffff',
+          scale: 2,
+          logging: false,
+          useCORS: true
+        });
+        
+        const imgData = canvas.toDataURL('image/png', 1.0);
+        const imgWidth = pageWidth - 2 * margin;
+        const imgHeight = (canvas.height * imgWidth) / canvas.width;
+        
+        checkPageBreak(imgHeight + 30);
+        
+        // Add title
+        pdf.setFontSize(14);
+        pdf.setFont('helvetica', 'bold');
+        pdf.text(chartTitle, margin, yPosition);
+        yPosition += 15;
+        
+        // Add image
+        pdf.addImage(imgData, 'PNG', margin, yPosition, imgWidth, imgHeight);
+        yPosition += imgHeight + 20;
+        
+        return true;
+      }
+    } catch (error) {
+      console.error(`Error capturing chart ${chartTitle}:`, error);
+    }
+    return false;
   };
 
   try {
@@ -86,7 +144,8 @@ export const exportResultsToPDF = async (beamData, results) => {
       yPosition += 8;
       pdf.setFont('helvetica', 'normal');
       beamData.pointLoads.forEach((load, index) => {
-        pdf.text(`  ${index + 1}. ${load.magnitude} kN at ${load.position} m`, margin, yPosition);
+        const direction = load.magnitude > 0 ? 'Upward' : 'Downward';
+        pdf.text(`  ${index + 1}. ${Math.abs(load.magnitude)} kN (${direction}) at ${load.position} m`, margin, yPosition);
         yPosition += 6;
       });
       yPosition += 5;
@@ -100,7 +159,7 @@ export const exportResultsToPDF = async (beamData, results) => {
       yPosition += 8;
       pdf.setFont('helvetica', 'normal');
       beamData.distributedLoads.forEach((load, index) => {
-        pdf.text(`  ${index + 1}. ${load.startMag} to ${load.endMag} kN/m from ${load.startPos} to ${load.endPos} m`, margin, yPosition);
+        pdf.text(`  ${index + 1}. ${Math.abs(load.startMag)} to ${Math.abs(load.endMag)} kN/m from ${load.startPos} to ${load.endPos} m`, margin, yPosition);
         yPosition += 6;
       });
       yPosition += 5;
@@ -120,6 +179,10 @@ export const exportResultsToPDF = async (beamData, results) => {
       });
       yPosition += 5;
     }
+
+    // Add Beam Diagram
+    yPosition += 10;
+    await addCanvasToPDF('beam-diagram-canvas', 'Beam Diagram');
 
     // Reaction Forces Section
     if (results.reactions.length > 0) {
@@ -146,6 +209,33 @@ export const exportResultsToPDF = async (beamData, results) => {
         }
         yPosition += 5;
       });
+    }
+
+    // Add Analysis Diagrams
+    if (results.shearForce.x.length > 0) {
+      // Add a new page for diagrams
+      pdf.addPage();
+      yPosition = margin;
+      
+      pdf.setFontSize(18);
+      pdf.setFont('helvetica', 'bold');
+      pdf.text('Analysis Diagrams', margin, yPosition);
+      yPosition += 20;
+
+      // Try to capture the charts
+      const chartCaptured1 = await addChartToPDF('Shear Force Diagram (SFD)', '.card:has(h3:contains("Shear Force Diagram"))');
+      const chartCaptured2 = await addChartToPDF('Bending Moment Diagram (BMD)', '.card:has(h3:contains("Bending Moment Diagram"))');
+      const chartCaptured3 = await addChartToPDF('Deflection Diagram', '.card:has(h3:contains("Deflection Diagram"))');
+
+      // If chart capture failed, add a note
+      if (!chartCaptured1 && !chartCaptured2 && !chartCaptured3) {
+        pdf.setFontSize(12);
+        pdf.setFont('helvetica', 'normal');
+        pdf.text('Note: Analysis diagrams are available in the application interface.', margin, yPosition);
+        yPosition += 10;
+        pdf.text('Charts could not be captured for this PDF export.', margin, yPosition);
+        yPosition += 20;
+      }
     }
 
     // Analysis Results Table

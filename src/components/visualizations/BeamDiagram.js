@@ -187,18 +187,18 @@ const BeamDiagram = ({ beamData, results }) => {
 
     const maxMag = Math.max(Math.abs(startMag), Math.abs(endMag));
     
-    // Determine directions for start and end
-    const startDirection = startMag >= 0 ? -1 : 1; // Negative magnitude = downward
-    const endDirection = endMag >= 0 ? -1 : 1;     // Negative magnitude = downward
+    // For downward loads, draw above the beam with downward arrows
+    const startDirection = startMag >= 0 ? -1 : -1; // Always draw above beam
+    const endDirection = endMag >= 0 ? -1 : -1;     // Always draw above beam
     
     const startHeight = (Math.abs(startMag) / maxMag) * 40;
     const endHeight = (Math.abs(endMag) / maxMag) * 40;
 
-    // Draw distributed load shape
+    // Draw distributed load shape above the beam
     ctx.beginPath();
     ctx.moveTo(startX, y);
-    ctx.lineTo(startX, y + startDirection * startHeight);
-    ctx.lineTo(endX, y + endDirection * endHeight);
+    ctx.lineTo(startX, y - startHeight); // Always go upward from beam
+    ctx.lineTo(endX, y - endHeight);     // Always go upward from beam
     ctx.lineTo(endX, y);
     ctx.closePath();
     ctx.globalAlpha = 0.3;
@@ -206,22 +206,32 @@ const BeamDiagram = ({ beamData, results }) => {
     ctx.globalAlpha = 1;
     ctx.stroke();
 
-    // Draw arrows
+    // Draw arrows pointing downward for downward loads
     const numArrows = Math.max(3, Math.floor((endX - startX) / 20));
     for (let i = 0; i <= numArrows; i++) {
       const x = startX + (i / numArrows) * (endX - startX);
       const mag = startMag + (i / numArrows) * (endMag - startMag);
-      const direction = mag >= 0 ? -1 : 1; // Negative magnitude = downward
       const height = (Math.abs(mag) / maxMag) * 40;
       
       if (height > 5) {
-        // Draw arrow pointing in correct direction
-        ctx.beginPath();
-        ctx.moveTo(x, y + direction * height);
-        ctx.lineTo(x - 3, y + direction * (height - 6));
-        ctx.lineTo(x + 3, y + direction * (height - 6));
-        ctx.closePath();
-        ctx.fill();
+        // For downward loads (negative magnitude), draw arrows pointing down
+        if (mag < 0) {
+          // Arrow pointing downward
+          ctx.beginPath();
+          ctx.moveTo(x, y - height);
+          ctx.lineTo(x - 3, y - height - 6);
+          ctx.lineTo(x + 3, y - height - 6);
+          ctx.closePath();
+          ctx.fill();
+        } else {
+          // Arrow pointing upward (for upward loads)
+          ctx.beginPath();
+          ctx.moveTo(x, y - height);
+          ctx.lineTo(x - 3, y - height + 6);
+          ctx.lineTo(x + 3, y - height + 6);
+          ctx.closePath();
+          ctx.fill();
+        }
       }
     }
 
@@ -230,7 +240,7 @@ const BeamDiagram = ({ beamData, results }) => {
       ctx.fillStyle = '#374151';
       ctx.font = '12px Inter';
       ctx.textAlign = 'center';
-      const labelY = y + startDirection * (startHeight + 15);
+      const labelY = y - startHeight - 15;
       ctx.fillText(`${Math.abs(startMag)} kN/m`, startX, labelY);
     }
     
@@ -238,7 +248,7 @@ const BeamDiagram = ({ beamData, results }) => {
       ctx.fillStyle = '#374151';
       ctx.font = '12px Inter';
       ctx.textAlign = 'center';
-      const labelY = y + endDirection * (endHeight + 15);
+      const labelY = y - endHeight - 15;
       ctx.fillText(`${Math.abs(endMag)} kN/m`, endX, labelY);
     }
 
@@ -253,8 +263,18 @@ const BeamDiagram = ({ beamData, results }) => {
     ctx.lineWidth = 2;
 
     const radius = 20;
-    const startAngle = magnitude > 0 ? 0 : Math.PI;
-    const endAngle = magnitude > 0 ? Math.PI * 1.5 : Math.PI * 2.5;
+    
+    // Fixed the counter-clockwise moment arc
+    let startAngle, endAngle;
+    if (magnitude > 0) {
+      // Clockwise moment
+      startAngle = 0;
+      endAngle = Math.PI * 1.5;
+    } else {
+      // Counter-clockwise moment: start from 0 and go to 0.5*PI
+      startAngle = 0;
+      endAngle = Math.PI * 0.5;
+    }
 
     // Draw moment arc
     ctx.beginPath();
@@ -264,10 +284,20 @@ const BeamDiagram = ({ beamData, results }) => {
     // Draw arrow head
     const arrowX = x + radius * Math.cos(endAngle);
     const arrowY = y + radius * Math.sin(endAngle);
+    
     ctx.beginPath();
     ctx.moveTo(arrowX, arrowY);
-    ctx.lineTo(arrowX - 5, arrowY - 5);
-    ctx.lineTo(arrowX - 5, arrowY + 5);
+    
+    if (magnitude > 0) {
+      // Clockwise arrow
+      ctx.lineTo(arrowX - 5, arrowY - 5);
+      ctx.lineTo(arrowX - 5, arrowY + 5);
+    } else {
+      // Counter-clockwise arrow
+      ctx.lineTo(arrowX + 5, arrowY - 5);
+      ctx.lineTo(arrowX - 5, arrowY - 5);
+    }
+    
     ctx.closePath();
     ctx.fill();
 
@@ -341,6 +371,7 @@ const BeamDiagram = ({ beamData, results }) => {
             width={800}
             height={300}
             className="w-full h-auto border border-gray-200 rounded"
+            id="beam-diagram-canvas"
           />
         </div>
       </div>
