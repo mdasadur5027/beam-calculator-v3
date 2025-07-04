@@ -38,7 +38,7 @@ const AboutModal = ({ onClose }) => {
               <p className="text-sm">Roll: 2100160</p>
               <p className="text-sm">Rajshahi University of Engineering & Technology</p>
               <p className="text-sm text-gray-500 mt-3">
-                Developed as part of structural engineering coursework
+                Developed as part of practicing and applying concepts from a structural analysis academic course.
               </p>
             </div>
           </div>
