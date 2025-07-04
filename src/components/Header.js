@@ -14,6 +14,9 @@ const Header = ({ beamData, results }) => {
 
     setIsExporting(true);
     try {
+      // Wait a moment for any pending renders to complete
+      await new Promise(resolve => setTimeout(resolve, 1000));
+      
       const result = await exportResultsToPDF(beamData, results);
       if (result.success) {
         alert(`Results exported successfully as ${result.fileName}`);

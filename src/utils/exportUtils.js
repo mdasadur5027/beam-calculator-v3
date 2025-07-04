@@ -18,13 +18,13 @@ export const exportResultsToPDF = async (beamData, results) => {
     return false;
   };
 
-  // Helper function to capture canvas and add to PDF
-  const addCanvasToPDF = async (canvasId, title, maxWidth = pageWidth - 2 * margin) => {
-    const canvas = document.getElementById(canvasId) || document.querySelector(`canvas[id="${canvasId}"]`) || document.querySelector('canvas');
-    if (canvas) {
-      try {
+  // Helper function to capture and add canvas to PDF
+  const addCanvasToPDF = async (canvasSelector, title) => {
+    try {
+      const canvas = document.querySelector(canvasSelector);
+      if (canvas) {
         const imgData = canvas.toDataURL('image/png', 1.0);
-        const imgWidth = maxWidth;
+        const imgWidth = pageWidth - 2 * margin;
         const imgHeight = (canvas.height * imgWidth) / canvas.width;
         
         checkPageBreak(imgHeight + 30);
@@ -40,27 +40,32 @@ export const exportResultsToPDF = async (beamData, results) => {
         yPosition += imgHeight + 20;
         
         return true;
-      } catch (error) {
-        console.error(`Error capturing ${canvasId}:`, error);
-        return false;
       }
+    } catch (error) {
+      console.error(`Error capturing canvas for ${title}:`, error);
     }
     return false;
   };
 
-  // Helper function to capture Chart.js charts
-  const addChartToPDF = async (chartTitle, chartSelector) => {
+  // Helper function to capture Chart.js charts using html2canvas
+  const addChartToPDF = async (chartContainer, title) => {
     try {
-      const chartContainer = document.querySelector(chartSelector);
       if (chartContainer) {
+        // Wait a bit for chart to fully render
+        await new Promise(resolve => setTimeout(resolve, 500));
+        
         const canvas = await html2canvas(chartContainer, {
           backgroundColor: '#ffffff',
-          scale: 2,
+          scale: 1.5,
           logging: false,
-          useCORS: true
+          useCORS: true,
+          allowTaint: true,
+          foreignObjectRendering: true,
+          width: chartContainer.offsetWidth,
+          height: chartContainer.offsetHeight
         });
         
-        const imgData = canvas.toDataURL('image/png', 1.0);
+        const imgData = canvas.toDataURL('image/png', 0.95);
         const imgWidth = pageWidth - 2 * margin;
         const imgHeight = (canvas.height * imgWidth) / canvas.width;
         
@@ -69,7 +74,7 @@ export const exportResultsToPDF = async (beamData, results) => {
         // Add title
         pdf.setFontSize(14);
         pdf.setFont('helvetica', 'bold');
-        pdf.text(chartTitle, margin, yPosition);
+        pdf.text(title, margin, yPosition);
         yPosition += 15;
         
         // Add image
@@ -79,7 +84,7 @@ export const exportResultsToPDF = async (beamData, results) => {
         return true;
       }
     } catch (error) {
-      console.error(`Error capturing chart ${chartTitle}:`, error);
+      console.error(`Error capturing chart for ${title}:`, error);
     }
     return false;
   };
@@ -181,8 +186,15 @@ export const exportResultsToPDF = async (beamData, results) => {
     }
 
     // Add Beam Diagram
-    yPosition += 10;
-    await addCanvasToPDF('beam-diagram-canvas', 'Beam Diagram');
+    pdf.addPage();
+    yPosition = margin;
+    
+    pdf.setFontSize(18);
+    pdf.setFont('helvetica', 'bold');
+    pdf.text('Beam Diagram', margin, yPosition);
+    yPosition += 20;
+
+    const beamDiagramCaptured = await addCanvasToPDF('#beam-diagram-canvas', 'Beam Configuration');
 
     // Reaction Forces Section
     if (results.reactions.length > 0) {
@@ -222,19 +234,32 @@ export const exportResultsToPDF = async (beamData, results) => {
       pdf.text('Analysis Diagrams', margin, yPosition);
       yPosition += 20;
 
-      // Try to capture the charts
-      const chartCaptured1 = await addChartToPDF('Shear Force Diagram (SFD)', '.card:has(h3:contains("Shear Force Diagram"))');
-      const chartCaptured2 = await addChartToPDF('Bending Moment Diagram (BMD)', '.card:has(h3:contains("Bending Moment Diagram"))');
-      const chartCaptured3 = await addChartToPDF('Deflection Diagram', '.card:has(h3:contains("Deflection Diagram"))');
+      // Capture SFD
+      const sfdContainer = document.querySelector('.card:has(h3)') ? 
+        Array.from(document.querySelectorAll('.card')).find(card => 
+          card.querySelector('h3')?.textContent?.includes('Shear Force Diagram')
+        ) : null;
+      
+      if (sfdContainer) {
+        await addChartToPDF(sfdContainer, 'Shear Force Diagram (SFD)');
+      }
 
-      // If chart capture failed, add a note
-      if (!chartCaptured1 && !chartCaptured2 && !chartCaptured3) {
-        pdf.setFontSize(12);
-        pdf.setFont('helvetica', 'normal');
-        pdf.text('Note: Analysis diagrams are available in the application interface.', margin, yPosition);
-        yPosition += 10;
-        pdf.text('Charts could not be captured for this PDF export.', margin, yPosition);
-        yPosition += 20;
+      // Capture BMD
+      const bmdContainer = Array.from(document.querySelectorAll('.card')).find(card => 
+        card.querySelector('h3')?.textContent?.includes('Bending Moment Diagram')
+      );
+      
+      if (bmdContainer) {
+        await addChartToPDF(bmdContainer, 'Bending Moment Diagram (BMD)');
+      }
+
+      // Capture Deflection Diagram
+      const deflectionContainer = Array.from(document.querySelectorAll('.card')).find(card => 
+        card.querySelector('h3')?.textContent?.includes('Deflection Diagram')
+      );
+      
+      if (deflectionContainer) {
+        await addChartToPDF(deflectionContainer, 'Deflection Diagram');
       }
     }
 
