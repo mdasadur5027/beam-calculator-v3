@@ -273,7 +273,7 @@ const BeamDiagram = ({ beamData, results }) => {
     } else {
       // Counter-clockwise moment: start from 0 and go to 0.5*PI
       startAngle = 0;
-      endAngle = Math.PI * 0.5;
+      endAngle = -Math.PI * 0.5;
     }
 
     // Draw moment arc
