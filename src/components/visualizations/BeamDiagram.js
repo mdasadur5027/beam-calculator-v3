@@ -1,15 +1,13 @@
 import React, { useRef, useEffect } from 'react';
 import { useUnits } from '../../contexts/UnitContext';
-import { useTheme } from '../../contexts/ThemeContext';
 
 const BeamDiagram = ({ beamData, results }) => {
   const canvasRef = useRef(null);
   const { convertValue, getUnit } = useUnits();
-  const { isDarkMode } = useTheme();
 
   useEffect(() => {
     drawBeam();
-  }, [beamData, results, isDarkMode]);
+  }, [beamData, results]);
 
   const drawBeam = () => {
     const canvas = canvasRef.current;
@@ -77,12 +75,8 @@ const BeamDiagram = ({ beamData, results }) => {
 
   const drawSupport = (ctx, x, y, type, position, beamLength) => {
     ctx.save();
-    // Use theme-aware colors
-    const strokeColor = isDarkMode ? '#e5e7eb' : '#374151';
-    const fillColor = isDarkMode ? '#e5e7eb' : '#374151';
-    
-    ctx.strokeStyle = strokeColor;
-    ctx.fillStyle = fillColor;
+    ctx.strokeStyle = '#374151';
+    ctx.fillStyle = '#374151';
     ctx.lineWidth = 2;
 
     switch (type) {
@@ -180,7 +174,7 @@ const BeamDiagram = ({ beamData, results }) => {
         ctx.lineTo(x, y - 6);
         ctx.stroke();
         
-        // Add label with theme-aware color
+        // Add label
         ctx.fillStyle = '#dc2626';
         ctx.font = '10px Inter';
         ctx.textAlign = 'center';
@@ -217,9 +211,9 @@ const BeamDiagram = ({ beamData, results }) => {
     ctx.closePath();
     ctx.fill();
 
-    // Draw magnitude label with units and theme-aware color
-    ctx.fillStyle = isDarkMode ? '#f3f4f6' : '#374151';
-    ctx.font = 'bold 12px Inter';
+    // Draw magnitude label with units
+    ctx.fillStyle = '#374151';
+    ctx.font = '12px Inter';
     ctx.textAlign = 'center';
     ctx.fillText(`${Math.abs(magnitude).toFixed(1)} ${getUnit('force')}`, x, y + direction * (arrowLength + 15));
 
@@ -284,18 +278,18 @@ const BeamDiagram = ({ beamData, results }) => {
       }
     }
 
-    // Draw magnitude labels with units and theme-aware color
+    // Draw magnitude labels with units
     if (startMag !== 0) {
-      ctx.fillStyle = isDarkMode ? '#f3f4f6' : '#374151';
-      ctx.font = 'bold 12px Inter';
+      ctx.fillStyle = '#374151';
+      ctx.font = '12px Inter';
       ctx.textAlign = 'center';
       const labelY = y - startHeight - 15;
       ctx.fillText(`${Math.abs(startMag).toFixed(1)} ${getUnit('distributedLoad')}`, startX, labelY);
     }
     
     if (endMag !== 0 && endMag !== startMag) {
-      ctx.fillStyle = isDarkMode ? '#f3f4f6' : '#374151';
-      ctx.font = 'bold 12px Inter';
+      ctx.fillStyle = '#374151';
+      ctx.font = '12px Inter';
       ctx.textAlign = 'center';
       const labelY = y - endHeight - 15;
       ctx.fillText(`${Math.abs(endMag).toFixed(1)} ${getUnit('distributedLoad')}`, endX, labelY);
@@ -338,9 +332,9 @@ const BeamDiagram = ({ beamData, results }) => {
     ctx.closePath();
     ctx.fill();
 
-    // Draw magnitude label with units and theme-aware color
-    ctx.fillStyle = isDarkMode ? '#f3f4f6' : '#374151';
-    ctx.font = 'bold 12px Inter';
+    // Draw magnitude label with units
+    ctx.fillStyle = '#374151';
+    ctx.font = '12px Inter';
     ctx.textAlign = 'center';
     ctx.fillText(`${Math.abs(magnitude).toFixed(1)} ${getUnit('moment')}`, x, y - 35);
 
@@ -349,14 +343,10 @@ const BeamDiagram = ({ beamData, results }) => {
 
   const drawDimensions = (ctx, startX, y, totalWidth, beamData) => {
     ctx.save();
-    // Use theme-aware colors
-    const strokeColor = isDarkMode ? '#9ca3af' : '#6b7280';
-    const fillColor = isDarkMode ? '#f3f4f6' : '#6b7280';
-    
-    ctx.strokeStyle = strokeColor;
-    ctx.fillStyle = fillColor;
+    ctx.strokeStyle = '#6b7280';
+    ctx.fillStyle = '#6b7280';
     ctx.lineWidth = 1;
-    ctx.font = 'bold 11px Inter';
+    ctx.font = '11px Inter';
     ctx.textAlign = 'center';
 
     // Collect all significant positions and convert to display units
