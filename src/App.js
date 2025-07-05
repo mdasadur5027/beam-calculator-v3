@@ -2,6 +2,8 @@ import React, { useState, useEffect } from 'react';
 import Header from './components/Header';
 import InputPanel from './components/InputPanel';
 import VisualizationPanel from './components/VisualizationPanel';
+import { ThemeProvider } from './contexts/ThemeContext';
+import { UnitProvider } from './contexts/UnitContext';
 import { 
   calculateReactions, 
   calculateShearForce, 
@@ -113,25 +115,29 @@ function App() {
   };
 
   return (
-    <div className="min-h-screen bg-gray-50">
-      <Header beamData={beamData} results={results} />
-      <div className="flex h-[calc(100vh-4rem)]">
-        <div className="w-96 border-r border-gray-200 bg-white overflow-y-auto">
-          <InputPanel 
-            beamData={beamData} 
-            updateBeamData={updateBeamData}
-            resolution={resolution}
-            setResolution={setResolution}
-          />
+    <ThemeProvider>
+      <UnitProvider>
+        <div className="min-h-screen bg-gray-50 dark:bg-gray-900 transition-colors">
+          <Header beamData={beamData} results={results} />
+          <div className="flex h-[calc(100vh-4rem)]">
+            <div className="w-96 border-r border-gray-200 dark:border-gray-700 bg-white dark:bg-gray-800 overflow-y-auto transition-colors">
+              <InputPanel 
+                beamData={beamData} 
+                updateBeamData={updateBeamData}
+                resolution={resolution}
+                setResolution={setResolution}
+              />
+            </div>
+            <div className="flex-1 overflow-hidden">
+              <VisualizationPanel 
+                beamData={beamData} 
+                results={results}
+              />
+            </div>
+          </div>
         </div>
-        <div className="flex-1 overflow-hidden">
-          <VisualizationPanel 
-            beamData={beamData} 
-            results={results}
-          />
-        </div>
-      </div>
-    </div>
+      </UnitProvider>
+    </ThemeProvider>
   );
 }
 

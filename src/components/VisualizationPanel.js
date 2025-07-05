@@ -2,9 +2,11 @@ import React, { useState } from 'react';
 import BeamDiagram from './visualizations/BeamDiagram';
 import DiagramCharts from './visualizations/DiagramCharts';
 import ResultsTables from './visualizations/ResultsTables';
+import { useUnits } from '../contexts/UnitContext';
 
 const VisualizationPanel = ({ beamData, results }) => {
   const [activeView, setActiveView] = useState('diagram');
+  const { convertValue, getUnit } = useUnits();
 
   const views = [
     { id: 'diagram', label: 'Beam Diagram', icon: '🏗️' },
@@ -25,9 +27,11 @@ const VisualizationPanel = ({ beamData, results }) => {
     }
   };
 
+  const displayLength = convertValue(beamData.length, 'length', 'SI');
+
   return (
-    <div className="h-full flex flex-col bg-white">
-      <div className="border-b border-gray-200 px-6 py-4">
+    <div className="h-full flex flex-col bg-white dark:bg-gray-800 transition-colors">
+      <div className="border-b border-gray-200 dark:border-gray-700 px-6 py-4">
         <div className="flex items-center justify-between">
           <div className="flex space-x-1">
             {views.map((view) => (
@@ -37,7 +41,7 @@ const VisualizationPanel = ({ beamData, results }) => {
                 className={`px-4 py-2 text-sm font-medium rounded-lg transition-colors ${
                   activeView === view.id
                     ? 'bg-primary-600 text-white'
-                    : 'text-gray-600 hover:text-gray-900 hover:bg-gray-100'
+                    : 'text-gray-600 dark:text-gray-300 hover:text-gray-900 dark:hover:text-white hover:bg-gray-100 dark:hover:bg-gray-700'
                 }`}
               >
                 <span className="mr-2">{view.icon}</span>
@@ -46,8 +50,8 @@ const VisualizationPanel = ({ beamData, results }) => {
             ))}
           </div>
           
-          <div className="flex items-center space-x-2 text-sm text-gray-500">
-            <span>Beam Length: {beamData.length}m</span>
+          <div className="flex items-center space-x-2 text-sm text-gray-500 dark:text-gray-400">
+            <span>Beam Length: {displayLength.toFixed(2)} {getUnit('length')}</span>
             <span>•</span>
             <span>Supports: {beamData.supports.length}</span>
             <span>•</span>

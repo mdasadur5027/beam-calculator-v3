@@ -35,8 +35,8 @@ const InputPanel = ({ beamData, updateBeamData, resolution, setResolution }) => 
 
   return (
     <div className="h-full flex flex-col">
-      <div className="p-4 border-b border-gray-200">
-        <h2 className="text-lg font-semibold text-gray-900 mb-4">Beam Configuration</h2>
+      <div className="p-4 border-b border-gray-200 dark:border-gray-700">
+        <h2 className="text-lg font-semibold text-gray-900 dark:text-white mb-4">Beam Configuration</h2>
         <div className="grid grid-cols-2 gap-2">
           {tabs.map((tab) => (
             <button
