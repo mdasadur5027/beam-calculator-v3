@@ -41,6 +41,26 @@ const SectionTab = ({ beamData, updateBeamData }) => {
         const Iweb = (tw * Math.pow(hw, 3)) / 12;
         I = Iflange + Iweb;
         break;
+      case 't-beam':
+        const bft = section.flangeWidth || 0.3; // Default 300mm
+        const tft = section.flangeThickness || 0.05; // Default 50mm
+        const hwt = section.webHeight || 0.4; // Default 400mm
+        const twt = section.webThickness || 0.02; // Default 20mm
+        const totalHeightT = hwt + tft;
+        
+        // T-beam moment of inertia calculation
+        // Calculate centroid first
+        const A1 = bft * tft; // Flange area
+        const A2 = twt * hwt; // Web area
+        const y1 = totalHeightT - tft / 2; // Flange centroid from bottom
+        const y2 = hwt / 2; // Web centroid from bottom
+        const yc = (A1 * y1 + A2 * y2) / (A1 + A2); // Overall centroid
+        
+        // Calculate moment of inertia about centroid
+        const I1 = (bft * Math.pow(tft, 3)) / 12 + A1 * Math.pow(y1 - yc, 2);
+        const I2 = (twt * Math.pow(hwt, 3)) / 12 + A2 * Math.pow(y2 - yc, 2);
+        I = I1 + I2;
+        break;
       case 'custom':
         I = section.momentOfInertia || 1e-4;
         break;
@@ -59,6 +79,77 @@ const SectionTab = ({ beamData, updateBeamData }) => {
         type: sectionType
       }
     });
+  };
+
+  const calculateStresses = () => {
+    const section = beamData.section || {};
+    const I = beamData.materialProperties.I;
+    
+    if (!results || !results.bendingMoment || results.bendingMoment.y.length === 0) {
+      return { maxTensile: 0, maxCompressive: 0, position: 0 };
+    }
+
+    // Find maximum bending moment
+    const maxMomentIndex = results.bendingMoment.y.findIndex(
+      m => Math.abs(m) === Math.max(...results.bendingMoment.y.map(Math.abs))
+    );
+    const maxMoment = results.bendingMoment.y[maxMomentIndex];
+    const position = results.bendingMoment.x[maxMomentIndex];
+
+    // Calculate section modulus and extreme fiber distances
+    let c_top = 0, c_bottom = 0;
+    
+    switch (section.type || sectionType) {
+      case 'rectangular':
+        const h = section.height || 0.5;
+        c_top = c_bottom = h / 2;
+        break;
+      case 'circular':
+        const d = section.diameter || 0.4;
+        c_top = c_bottom = d / 2;
+        break;
+      case 'i-beam':
+        const totalHeight = (section.webHeight || 0.4) + 2 * (section.flangeThickness || 0.02);
+        c_top = c_bottom = totalHeight / 2;
+        break;
+      case 't-beam':
+        const bft = section.flangeWidth || 0.3;
+        const tft = section.flangeThickness || 0.05;
+        const hwt = section.webHeight || 0.4;
+        const twt = section.webThickness || 0.02;
+        const totalHeightT = hwt + tft;
+        
+        // Calculate centroid
+        const A1 = bft * tft;
+        const A2 = twt * hwt;
+        const y1 = totalHeightT - tft / 2;
+        const y2 = hwt / 2;
+        const yc = (A1 * y1 + A2 * y2) / (A1 + A2);
+        
+        c_top = totalHeightT - yc;
+        c_bottom = yc;
+        break;
+      default:
+        c_top = c_bottom = 0.25; // Default assumption
+    }
+
+    // Calculate stresses (σ = M*c/I)
+    const stress_top = Math.abs(maxMoment * c_top / I);
+    const stress_bottom = Math.abs(maxMoment * c_bottom / I);
+    
+    // Determine tension and compression based on moment sign
+    let maxTensile, maxCompressive;
+    if (maxMoment > 0) {
+      // Positive moment: bottom in tension, top in compression
+      maxTensile = stress_bottom;
+      maxCompressive = stress_top;
+    } else {
+      // Negative moment: top in tension, bottom in compression
+      maxTensile = stress_top;
+      maxCompressive = stress_bottom;
+    }
+
+    return { maxTensile, maxCompressive, position };
   };
 
   const sectionPresets = [
@@ -91,6 +182,15 @@ const SectionTab = ({ beamData, updateBeamData }) => {
       webHeight: 0.4, 
       webThickness: 0.01,
       description: 'Standard steel I-beam'
+    },
+    { 
+      name: 'T-Beam', 
+      type: 't-beam', 
+      flangeWidth: 0.3, 
+      flangeThickness: 0.05, 
+      webHeight: 0.4, 
+      webThickness: 0.02,
+      description: 'Standard T-beam section'
     }
   ];
 
@@ -137,6 +237,7 @@ const SectionTab = ({ beamData, updateBeamData }) => {
               <option value="rectangular">Rectangular</option>
               <option value="circular">Circular</option>
               <option value="i-beam">I-Beam</option>
+              <option value="t-beam">T-Beam</option>
               <option value="custom">Custom</option>
             </select>
           </div>
@@ -248,6 +349,64 @@ const SectionTab = ({ beamData, updateBeamData }) => {
             </div>
           )}
 
+          {/* T-Beam Section */}
+          {(section.type || sectionType) === 't-beam' && (
+            <div className="grid grid-cols-2 gap-4">
+              <div>
+                <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
+                  Flange Width ({getUnit('length')})
+                </label>
+                <input
+                  type="number"
+                  min="0.01"
+                  step="0.01"
+                  value={convertValue(section.flangeWidth || 0.3, 'length', 'SI').toFixed(3)}
+                  onChange={(e) => updateSectionProperty('flangeWidth', parseFloat(e.target.value) || 0)}
+                  className="input-field"
+                />
+              </div>
+              <div>
+                <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
+                  Flange Thickness ({getUnit('length')})
+                </label>
+                <input
+                  type="number"
+                  min="0.001"
+                  step="0.001"
+                  value={convertValue(section.flangeThickness || 0.05, 'length', 'SI').toFixed(3)}
+                  onChange={(e) => updateSectionProperty('flangeThickness', parseFloat(e.target.value) || 0)}
+                  className="input-field"
+                />
+              </div>
+              <div>
+                <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
+                  Web Height ({getUnit('length')})
+                </label>
+                <input
+                  type="number"
+                  min="0.01"
+                  step="0.01"
+                  value={convertValue(section.webHeight || 0.4, 'length', 'SI').toFixed(3)}
+                  onChange={(e) => updateSectionProperty('webHeight', parseFloat(e.target.value) || 0)}
+                  className="input-field"
+                />
+              </div>
+              <div>
+                <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
+                  Web Thickness ({getUnit('length')})
+                </label>
+                <input
+                  type="number"
+                  min="0.001"
+                  step="0.001"
+                  value={convertValue(section.webThickness || 0.02, 'length', 'SI').toFixed(3)}
+                  onChange={(e) => updateSectionProperty('webThickness', parseFloat(e.target.value) || 0)}
+                  className="input-field"
+                />
+              </div>
+            </div>
+          )}
+
           {/* Custom Section */}
           {(section.type || sectionType) === 'custom' && (
             <div>
@@ -327,6 +486,11 @@ const SectionTab = ({ beamData, updateBeamData }) => {
                   Diameter: {convertValue(section.diameter || 0.4, 'length', 'SI').toFixed(0)} {getUnit('length')}
                 </div>
               )}
+              {(section.type || sectionType) === 't-beam' && (
+                <div className="mt-1">
+                  T-Section: {convertValue(section.flangeWidth || 0.3, 'length', 'SI').toFixed(0)} × {convertValue(section.flangeThickness || 0.05, 'length', 'SI').toFixed(0)} flange, {convertValue(section.webThickness || 0.02, 'length', 'SI').toFixed(0)} × {convertValue(section.webHeight || 0.4, 'length', 'SI').toFixed(0)} web {getUnit('length')}
+                </div>
+              )}
             </div>
           </div>
         </div>
@@ -368,6 +532,14 @@ const SectionTab = ({ beamData, updateBeamData }) => {
                 <rect x="90" y="45" width="20" height="60" />
                 {/* Bottom flange */}
                 <rect x="40" y="105" width="120" height="20" />
+              </g>
+            )}
+            {(section.type || sectionType) === 't-beam' && (
+              <g className="text-blue-600 dark:text-blue-400" fill="none" stroke="currentColor" strokeWidth="2">
+                {/* Top flange */}
+                <rect x="40" y="25" width="120" height="25" />
+                {/* Web */}
+                <rect x="90" y="50" width="20" height="75" />
               </g>
             )}
             {(section.type || sectionType) === 'custom' && (
