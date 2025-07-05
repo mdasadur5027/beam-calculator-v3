@@ -22,6 +22,11 @@ function App() {
     materialProperties: {
       E: 2e8, // Young's modulus in kN/m²
       I: 1e-4  // Moment of inertia in m⁴
+    },
+    section: {
+      type: 'rectangular',
+      width: 0.3,
+      height: 0.5
     }
   });
 

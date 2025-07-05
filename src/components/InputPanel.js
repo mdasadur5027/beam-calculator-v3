@@ -4,6 +4,7 @@ import SupportsTab from './tabs/SupportsTab';
 import LoadsTab from './tabs/LoadsTab';
 import MomentsTab from './tabs/MomentsTab';
 import MaterialTab from './tabs/MaterialTab';
+import SectionTab from './tabs/SectionTab';
 
 const InputPanel = ({ beamData, updateBeamData, resolution, setResolution }) => {
   const [activeTab, setActiveTab] = useState('length');
@@ -13,6 +14,7 @@ const InputPanel = ({ beamData, updateBeamData, resolution, setResolution }) => 
     { id: 'supports', label: 'Supports', icon: '🏗️' },
     { id: 'loads', label: 'Loads', icon: '⬇️' },
     { id: 'moments', label: 'Moments', icon: '🔄' },
+    { id: 'section', label: 'Section', icon: '⬜' },
     { id: 'material', label: 'Material', icon: '🧱' }
   ];
 
@@ -26,6 +28,8 @@ const InputPanel = ({ beamData, updateBeamData, resolution, setResolution }) => 
         return <LoadsTab beamData={beamData} updateBeamData={updateBeamData} />;
       case 'moments':
         return <MomentsTab beamData={beamData} updateBeamData={updateBeamData} />;
+      case 'section':
+        return <SectionTab beamData={beamData} updateBeamData={updateBeamData} />;
       case 'material':
         return <MaterialTab beamData={beamData} updateBeamData={updateBeamData} resolution={resolution} setResolution={setResolution} />;
       default:

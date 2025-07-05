@@ -1,7 +1,9 @@
 import React, { useRef, useEffect } from 'react';
+import { useUnits } from '../../contexts/UnitContext';
 
 const BeamDiagram = ({ beamData, results }) => {
   const canvasRef = useRef(null);
+  const { convertValue, getUnit } = useUnits();
 
   useEffect(() => {
     drawBeam();
@@ -21,44 +23,54 @@ const BeamDiagram = ({ beamData, results }) => {
     const margin = 80;
     const beamY = height / 2;
     const beamHeight = 20;
-    const scale = (width - 2 * margin) / beamData.length;
+    const displayLength = convertValue(beamData.length, 'length', 'SI');
+    const scale = (width - 2 * margin) / displayLength;
 
     // Draw beam
     ctx.fillStyle = '#3b82f6';
-    ctx.fillRect(margin, beamY - beamHeight/2, beamData.length * scale, beamHeight);
+    ctx.fillRect(margin, beamY - beamHeight/2, displayLength * scale, beamHeight);
     
     // Draw beam outline
     ctx.strokeStyle = '#1e40af';
     ctx.lineWidth = 2;
-    ctx.strokeRect(margin, beamY - beamHeight/2, beamData.length * scale, beamHeight);
+    ctx.strokeRect(margin, beamY - beamHeight/2, displayLength * scale, beamHeight);
 
     // Draw supports
     beamData.supports.forEach(support => {
-      const x = margin + support.position * scale;
+      const displayPos = convertValue(support.position, 'length', 'SI');
+      const x = margin + displayPos * scale;
       drawSupport(ctx, x, beamY + beamHeight/2, support.type, support.position, beamData.length);
     });
 
     // Draw point loads
     beamData.pointLoads.forEach(load => {
-      const x = margin + load.position * scale;
-      drawPointLoad(ctx, x, beamY - beamHeight/2, load.magnitude);
+      const displayPos = convertValue(load.position, 'length', 'SI');
+      const displayMag = convertValue(load.magnitude, 'force', 'SI');
+      const x = margin + displayPos * scale;
+      drawPointLoad(ctx, x, beamY - beamHeight/2, displayMag);
     });
 
     // Draw distributed loads
     beamData.distributedLoads.forEach(load => {
-      const startX = margin + load.startPos * scale;
-      const endX = margin + load.endPos * scale;
-      drawDistributedLoad(ctx, startX, endX, beamY - beamHeight/2, load.startMag, load.endMag);
+      const displayStartPos = convertValue(load.startPos, 'length', 'SI');
+      const displayEndPos = convertValue(load.endPos, 'length', 'SI');
+      const displayStartMag = convertValue(load.startMag, 'distributedLoad', 'SI');
+      const displayEndMag = convertValue(load.endMag, 'distributedLoad', 'SI');
+      const startX = margin + displayStartPos * scale;
+      const endX = margin + displayEndPos * scale;
+      drawDistributedLoad(ctx, startX, endX, beamY - beamHeight/2, displayStartMag, displayEndMag);
     });
 
     // Draw moments
     beamData.moments.forEach(moment => {
-      const x = margin + moment.position * scale;
-      drawMoment(ctx, x, beamY, moment.magnitude);
+      const displayPos = convertValue(moment.position, 'length', 'SI');
+      const displayMag = convertValue(moment.magnitude, 'moment', 'SI');
+      const x = margin + displayPos * scale;
+      drawMoment(ctx, x, beamY, displayMag);
     });
 
     // Draw dimensions
-    drawDimensions(ctx, margin, beamY + 60, beamData.length * scale, beamData);
+    drawDimensions(ctx, margin, beamY + 60, displayLength * scale, beamData);
   };
 
   const drawSupport = (ctx, x, y, type, position, beamLength) => {
@@ -199,11 +211,11 @@ const BeamDiagram = ({ beamData, results }) => {
     ctx.closePath();
     ctx.fill();
 
-    // Draw magnitude label
+    // Draw magnitude label with units
     ctx.fillStyle = '#374151';
     ctx.font = '12px Inter';
     ctx.textAlign = 'center';
-    ctx.fillText(`${Math.abs(magnitude)} kN`, x, y + direction * (arrowLength + 15));
+    ctx.fillText(`${Math.abs(magnitude).toFixed(1)} ${getUnit('force')}`, x, y + direction * (arrowLength + 15));
 
     ctx.restore();
   };
@@ -266,13 +278,13 @@ const BeamDiagram = ({ beamData, results }) => {
       }
     }
 
-    // Draw magnitude labels
+    // Draw magnitude labels with units
     if (startMag !== 0) {
       ctx.fillStyle = '#374151';
       ctx.font = '12px Inter';
       ctx.textAlign = 'center';
       const labelY = y - startHeight - 15;
-      ctx.fillText(`${Math.abs(startMag)} kN/m`, startX, labelY);
+      ctx.fillText(`${Math.abs(startMag).toFixed(1)} ${getUnit('distributedLoad')}`, startX, labelY);
     }
     
     if (endMag !== 0 && endMag !== startMag) {
@@ -280,7 +292,7 @@ const BeamDiagram = ({ beamData, results }) => {
       ctx.font = '12px Inter';
       ctx.textAlign = 'center';
       const labelY = y - endHeight - 15;
-      ctx.fillText(`${Math.abs(endMag)} kN/m`, endX, labelY);
+      ctx.fillText(`${Math.abs(endMag).toFixed(1)} ${getUnit('distributedLoad')}`, endX, labelY);
     }
 
     ctx.restore();
@@ -320,11 +332,11 @@ const BeamDiagram = ({ beamData, results }) => {
     ctx.closePath();
     ctx.fill();
 
-    // Draw magnitude label
+    // Draw magnitude label with units
     ctx.fillStyle = '#374151';
     ctx.font = '12px Inter';
     ctx.textAlign = 'center';
-    ctx.fillText(`${Math.abs(magnitude)} kNm`, x, y - 35);
+    ctx.fillText(`${Math.abs(magnitude).toFixed(1)} ${getUnit('moment')}`, x, y - 35);
 
     ctx.restore();
   };
@@ -337,7 +349,7 @@ const BeamDiagram = ({ beamData, results }) => {
     ctx.font = '11px Inter';
     ctx.textAlign = 'center';
 
-    // Collect all significant positions
+    // Collect all significant positions and convert to display units
     const positions = [0, beamData.length];
     beamData.supports.forEach(support => positions.push(support.position));
     beamData.pointLoads.forEach(load => positions.push(load.position));
@@ -348,6 +360,7 @@ const BeamDiagram = ({ beamData, results }) => {
     beamData.moments.forEach(moment => positions.push(moment.position));
 
     const uniquePositions = [...new Set(positions)].sort((a, b) => a - b);
+    const displayPositions = uniquePositions.map(pos => convertValue(pos, 'length', 'SI'));
 
     // Draw dimension line
     ctx.beginPath();
@@ -356,11 +369,12 @@ const BeamDiagram = ({ beamData, results }) => {
     ctx.stroke();
 
     // Draw dimension segments
-    for (let i = 0; i < uniquePositions.length - 1; i++) {
-      const pos1 = uniquePositions[i];
-      const pos2 = uniquePositions[i + 1];
-      const x1 = startX + (pos1 / beamData.length) * totalWidth;
-      const x2 = startX + (pos2 / beamData.length) * totalWidth;
+    for (let i = 0; i < displayPositions.length - 1; i++) {
+      const pos1 = displayPositions[i];
+      const pos2 = displayPositions[i + 1];
+      const displayLength = convertValue(beamData.length, 'length', 'SI');
+      const x1 = startX + (pos1 / displayLength) * totalWidth;
+      const x2 = startX + (pos2 / displayLength) * totalWidth;
       const distance = pos2 - pos1;
 
       // Draw tick marks
@@ -371,9 +385,9 @@ const BeamDiagram = ({ beamData, results }) => {
       ctx.lineTo(x2, y + 5);
       ctx.stroke();
 
-      // Draw dimension text
+      // Draw dimension text with units
       if (distance > 0) {
-        ctx.fillText(`${distance.toFixed(1)}m`, (x1 + x2) / 2, y + 20);
+        ctx.fillText(`${distance.toFixed(1)} ${getUnit('length')}`, (x1 + x2) / 2, y + 20);
       }
     }
 
@@ -383,13 +397,13 @@ const BeamDiagram = ({ beamData, results }) => {
   return (
     <div className="space-y-6">
       <div className="card">
-        <h3 className="text-lg font-semibold text-gray-900 mb-4">Beam Diagram</h3>
-        <div className="bg-gray-50 rounded-lg p-4">
+        <h3 className="text-lg font-semibold text-gray-900 dark:text-white mb-4">Beam Diagram</h3>
+        <div className="bg-gray-50 dark:bg-gray-700 rounded-lg p-4">
           <canvas
             ref={canvasRef}
             width={800}
             height={300}
-            className="w-full h-auto border border-gray-200 rounded"
+            className="w-full h-auto border border-gray-200 dark:border-gray-600 rounded"
             id="beam-diagram-canvas"
           />
         </div>
@@ -397,27 +411,31 @@ const BeamDiagram = ({ beamData, results }) => {
 
       {results.reactions.length > 0 && (
         <div className="card">
-          <h3 className="text-lg font-semibold text-gray-900 mb-4">Reaction Forces</h3>
+          <h3 className="text-lg font-semibold text-gray-900 dark:text-white mb-4">Reaction Forces</h3>
           <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
             {results.reactions.map((reaction, index) => {
               const support = beamData.supports.find(s => s.position === reaction.position);
+              const displayPos = convertValue(reaction.position, 'length', 'SI');
+              const displayForce = convertValue(reaction.force, 'force', 'SI');
+              const displayMoment = reaction.moment !== undefined ? convertValue(reaction.moment, 'moment', 'SI') : undefined;
+              
               return (
-                <div key={index} className="bg-blue-50 border border-blue-200 rounded-lg p-4">
+                <div key={index} className="bg-blue-50 dark:bg-blue-900/20 border border-blue-200 dark:border-blue-800 rounded-lg p-4">
                   <div className="flex items-center justify-between">
-                    <span className="font-medium text-blue-900">
-                      {support?.type === 'Internal Hinge' ? 'Internal Hinge' : 'Support'} at {reaction.position}m
+                    <span className="font-medium text-blue-900 dark:text-blue-200">
+                      {support?.type === 'Internal Hinge' ? 'Internal Hinge' : 'Support'} at {displayPos.toFixed(2)} {getUnit('length')}
                     </span>
-                    <span className="text-blue-700">
-                      {Math.abs(reaction.force).toFixed(2)} kN {reaction.force < 0 ? '↓' : '↑'}
+                    <span className="text-blue-700 dark:text-blue-300">
+                      {Math.abs(displayForce).toFixed(2)} {getUnit('force')} {reaction.force < 0 ? '↓' : '↑'}
                     </span>
                   </div>
-                  {reaction.moment !== undefined && (
-                    <div className="mt-2 text-sm text-blue-700">
-                      Moment: {Math.abs(reaction.moment).toFixed(2)} kNm {reaction.moment > 0 ? '↻' : '↺'}
+                  {displayMoment !== undefined && (
+                    <div className="mt-2 text-sm text-blue-700 dark:text-blue-300">
+                      Moment: {Math.abs(displayMoment).toFixed(2)} {getUnit('moment')} {reaction.moment > 0 ? '↻' : '↺'}
                     </div>
                   )}
                   {support?.type === 'Internal Hinge' && (
-                    <div className="mt-2 text-xs text-yellow-700 bg-yellow-100 px-2 py-1 rounded">
+                    <div className="mt-2 text-xs text-yellow-700 dark:text-yellow-300 bg-yellow-100 dark:bg-yellow-900/20 px-2 py-1 rounded">
                       Internal hinge: Moment = 0 (releases moment)
                     </div>
                   )}
